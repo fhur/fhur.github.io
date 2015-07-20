@@ -24,7 +24,7 @@ A simple example of how our templates will look like:
  <ul>
  {{#friends}}
    <li>{{first-name}} {{last-name}} </li>
-   {{/friends}}
+ {{/friends}}
  </ul>")
 
 ;; Now we render the template
@@ -56,7 +56,7 @@ Rendering templates is a 3 step process:
 
 ##### **Step 1: Lexical Analysis**
 The purpose of the *lexical analysis* step is to convert a template
-as a string into a list of token.
+string into a list of tokens.
 
 ##### **Step 2: Parsing**
 The second step, *parsing*, is in charge of converting the list of
@@ -72,11 +72,14 @@ compile and render templates let's get into detail.
 
 # Step 1: Lexical Analysis
 
-As mentioned earlier, the lexical analysis step turns a template string
-into a list of tokens. The main purpose of this step is to implement the
-`tokenize` function which given a string as input outputs a list of
-tokens. Let's see what this means with an example and then I will show
-you how to implement the `tokenize` function.
+The main purpose of the *lexical analysis* step is to implement the
+`tokenize` function which takes a template as input and converts it into
+a list of tokens. A token is a very simple data structure (usually a
+tuple) that splits the template into meaningful lexical elements. A
+typical programming language will have string tokens, reserved keyword
+tokens, number tokens, etc.
+
+Let's see with an example how the `tokenize` function works.
 
 Example 1: tokenizing a simple template
 {% highlight clojure %}
@@ -141,7 +144,7 @@ tokens, the tokenization procedure is implemented using two functions:
 The `tokenize` function is a very simple one, it takes as input a
 template string and loops through the template until it reaches the end.
 On every iteration the `tokenize-chunk` function is called which tries
-to match the remaining template to a token, when the match is found, the
+to match the remaining template to a token, when a match is found, the
 `tokens` vector will `conj`oined with the new token and the remaining
 template will be `substring`ed by the matched string.
 
@@ -185,7 +188,7 @@ doing the actual heavy work of matching strings to tokens.
 {% endhighlight %}
 
 #### `when-match`, what is that?
-Youjprobably noticed the use of the `when-match` macro. The implementation
+You probably noticed the use of the `when-match` macro. The implementation
 for the `when-match` macro can be found
 [here](https://github.com/fhur/gabo/blob/master/src/gabo/util.clj).
 
@@ -200,12 +203,11 @@ user=> (when-match "a long string"
 {% endraw %}
 {% endhighlight %}
 
-It takes a string as its first argument followed by n pairs of forms. The
-macro will try to match the regular expression in the first form. If a
-match is found then the symbol preceding the reglar expression will be
+`when-match` takes a string as its first argument followed by n pairs of forms.
+The macro will try to match the regular expression in the first form. If a
+match is found then the symbol preceding the regular expression will be
 `let` and the second form will be evaluated. Regular expression matches
-use `re-find` under the hood so `(re-find #"[a-z]+(\d+)[a-z]+" "abc123def")`
-will return a list of matches.
+use `re-find` under the hood.
 
 If there is no match then the same will be attempted with the next pair
 of forms. I suggest you play around with `when-match` in your `REPL` to
@@ -259,7 +261,7 @@ Cities:
 {% endraw %}
 {% endhighlight %}
 
-Tokenization is quite simple using our `tokenize function`
+Tokenization is quite simple using our `tokenize` function
 {% highlight clojure %}
 {% raw %}
 user=> (tokenize template)
@@ -277,19 +279,26 @@ user=> (tokenize template)
 {% endraw %}
 {% endhighlight %}
 
-We will no convert those tokens into a tree. The conversion will use
+We will now convert those tokens into a tree. The conversion will use
 these rules:
+
 * `:literal` or `:symbol` tokens will be left untouched
 * `:iter-init` and `:iter-end` tokens will be grouped into an `:iter`
 node and all tokens between the init/end pair will be parsed
 recursively.
 
-##### Example:
+##### Example of an AST as produced by the `parse` function
 {% highlight clojure %}
 {% raw %}
-user=> (parse "{{#numbers}}Number:{{.}}{{/numbers}}")
-[[:iter "numbers" :default [[:literal "Number:"]
-                            [:symbol "."]]]]
+user=> (parse template)
+[[:literal "Countries with their cities:\n"]
+ [:iter "countries" "\n" [[:literal "\nCountry: "]
+                          [:symbol "name"]
+                          [:literal "\nCities:\n"]
+                          [:iter "cities" "\n" [[:literal "\n * "]
+                                                [:symbol "name"]
+                                                [:literal "\n"]]]
+                          [:literal "\n"]]]]
 {% endraw %}
 {% endhighlight %}
 
@@ -336,7 +345,7 @@ list of tokens as input and outputs an AST.
 The `build-ast` function is a bit complex, but let's break it down into
 a series of steps:
 
-* It loops through all the tokens carrying the `ast` which will be the
+* It `loop`s through all the tokens; the `ast` which will be the
 result of the function.
 * The `if` in line 6 simply asserts that when there are no tokens left,
 we are done so just return the `ast`.
@@ -344,9 +353,10 @@ we are done so just return the `ast`.
 in the iteration.
 * The `cond` has 2 cases and an `else`
   * Case 1: the "simple" case, if the token is a literal or symbol
-  simply `conj`oin the token to the `ast`.
-  * Case 2: the "hard" case is `eval`ed when an `:iter-init` token is
-  found. The `find-iter-sub-list` function will return all tokens inside
+  simply add token to the `ast`.
+  * Case 2: the "hard" case is evaled when an `:iter-init` token is
+  found.   
+  The `find-iter-sub-list` function will return all tokens inside
   the `:iter-init` and `:iter-end` pair.
   The `recur` call will drop all tokens found in the `sub-list` + 2
   which corresponds to the `:iter-init` and `:iter-end` tokens.
@@ -357,9 +367,8 @@ in the iteration.
   unexpected token.
 
 This finishes our explanation of the parsing step. I have tried to write
-the simplest possible parser and hopefully you think so too. A more
-complex one would include better error detection mechanisms including
-the line number and column.
+the simplest possible parser, hopefully you think so too. A more complex
+one would, for example, include better error detection mechanisms.
 
 # Step 3: Rendering
 
@@ -410,7 +419,7 @@ Let us now look at the implementation of `eval-tree`:
 `eval-tree` runs through each node in the AST recursively as follows:
 
 * If a `:literal` token is found, return the token's value.
-* If a `:symbol` is found then check if its value is "."
+* If a `:symbol` is found then check if its value is `"."`
   * Case `token-val` is `"."`: return the complete context as a string.
   * Case `token-val` is not `"."`: look for `token-val` as a keyword
   inside the context map and return that.
