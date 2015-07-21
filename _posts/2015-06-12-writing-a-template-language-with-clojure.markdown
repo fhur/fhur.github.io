@@ -11,7 +11,7 @@ is implemented or how to write your own template system? this post will
 teach you the basics.
 
 NOTE: although this post discusses abstract syntax trees and lexical
-analysis, don't be intimidated, no experience other than a basic knwoledge of
+analysis, don't be intimidated, no experience other than a basic knowledge of
 Clojure and regular expressions is needed to read, understand and be able to
 implement your own template language.
 
@@ -45,7 +45,7 @@ A simple example of how our templates will look like:
 # Get the code
 
 This blog post is based on [gabo](https://github.com/fhur/gabo), I
-suggest you take a look at the readme, clone the project or at least
+suggest you take a look at the README, clone the project or at least
 play with it a little using the repl. Code is also available in
 [clojars](http://clojars.org/gabo).
 
@@ -114,7 +114,7 @@ the token identifier, the second one corresponds to the token's value.
 There are 4 types of tokens:
 
 - `:symbol`: Symbols use the following syntax {%raw%}`{{something}}`{%endraw%}.
-- `:iter-init`: Mark the beggining of an iteration, they have the
+- `:iter-init`: Mark the beginning of an iteration, they have the
 following syntax: {%raw%}`{{#something}}`{%endraw%}.
 - `:iter-end`: they mark the termination of an iteration as started by
 an :iter-init token. They look like {%raw%}`{{/something}}`{%endraw%}
@@ -242,9 +242,9 @@ step.
 
 Let us recall that the purpose of this step is to produce an *abstract
 syntax tree* or AST. Think of an AST as a tree like representation of our
-template wich we can later use to actually render templates.
+template which we can later use to actually render templates.
 
-Consider a template wich renders a country and every city in the
+Consider a template which renders a country and every city in the
 country. We will first tokenize it and then manually convert the tokens
 into an AST.
 
@@ -429,7 +429,7 @@ Let us now look at the implementation of `eval-tree`:
   * Recursively call `eval-tree` on every node in the `sub-tree`.
   * Interpose the previous result with the separator which is by default
   `','`.
-  * Finally concatenate all "subtemplates" and separators.
+  * Finally concatenate all "sub-templates" and separators.
 * The final branch `(coll? tree)` is actually only evaled once, the first
 time that `eval-tree` is called as ASTs produced by `parse` are not
 actually trees, they are a list of trees. This step is equivalent to the
@@ -454,4 +454,4 @@ I hope you now have a good understanding on how to write your own
 template system. If you have any questions, suggestions or just want to
 chat, you can e-mail me at `fernandohur` at `gmail.com`.
 
-Critticism is always welcome but go easy on me, it's my first post ;)
+Criticism is always welcome but go easy on me, it's my first post ;)
