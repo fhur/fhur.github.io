@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "A simple macro to simulate clojure interpolation"
-date:   2016-03-2 13:13:08
+date:   2016-03-1 12:13:08
 categories: macro clojure interpolation ruby
 ---
 
