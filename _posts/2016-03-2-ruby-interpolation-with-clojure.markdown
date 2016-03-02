@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "A simple macro to simulate clojure interpolation"
+title:  "A simple macro to simulate ruby string interpolation"
 date:   2016-02-1 12:13:08
 categories: macro clojure
 ---
