@@ -1,7 +1,7 @@
 ---
 layout: post
-title:  "A simple macro to simulate ruby string interpolation"
-date:   2016-06-3 12:13:08
+title:  How to generate functions with macros
+date:   2016-03-3 12:13:08
 categories: macro clojure
 ---
 
