@@ -1,7 +1,7 @@
 ---
 layout: post
-title:  "Composable regular expressions"
-date:   2016-06-3 12:13:08
+title:  "Implementing Union Find with Clojure"
+date:   2016-04-1 12:13:08
 categories: data-structure clojure
 ---
 
@@ -38,7 +38,7 @@ it will not be completely trivial.
 The union find (UF) datastructure exposes two operations `union` and `find`. It is used most notably in
 Kruskal's Minimum Spanning Tree Algorithm. A UF is composed of a collection of sets; given an element
 you can quickly determine to which set the element belongs to (`find`) and given two sets, you can
-merge them (`union`). UF also typically exposes a `makeset` operation which given an element returns
+merge them (`union`). UF also typically exposes a `makeset` operation which, given an element, returns
 a singleton set with that element in it.
 
 To get a bit of intuition behind UF consider that you have a set of gangsters and a map indicating where
@@ -49,6 +49,7 @@ groups of gangsters that have been spotted in the same area so that you can get 
 belong to. Assume you also know beforehand the number of gangs operating in the city.
 
 This classic clustering problem is easy to solve using UF:
+
 1. Form a graph with all the gangsters as vertices (a graph G, get it?)
 2. Find the closest pair of gangsters `(a, b)` such that `find(a) != find(b)` and call `union(a,b)`.
    Add an adge in the graph between `a` and `b`.
@@ -62,8 +63,7 @@ how this would look like in Clojure. Let's being by describing the protocol:
 {% highlight clojure %}
 {% raw %}
 (defprotocol UnionFind
-  (parent
-    [this x]
+  (parent [this x]
     "Returns the parent of x. Guaranteed to be non-nil.
     If x is a root then the parent of x is x.")
   (rank [this x]
@@ -73,7 +73,7 @@ how this would look like in Clojure. Let's being by describing the protocol:
     "Returns the root of the given element.")
   (union [this x y]
     "Merges the subtrees of the trees that x and y belong to."))
-{ endraw %}
+{% endraw %}
 {% endhighlight %}
 
 For the purposes of this implementation I have added two additional operations: `parent` and `rank`.
@@ -88,13 +88,15 @@ gangster). The `parent` operation will return, given an element `x` the element'
 #### Trees!?!?! I thought union find was all about sets
 
 A `RankedUnionFind` represents sets as trees. An element is said to be in the set if it is in the tree.
-Two sets are considered the same if their root is the same.
+Two sets are considered the same if their root is the same. This is a neat representation because
+it allows to compare sets in constant time and to determine which set an element belongs to in logarithmic
+time (the height of the tree).
 
 ## RankedUnionFind
 
-And now, without further delay, I give you the `RankedUnionFind`
+And now, without further delay, I give you the `RankedUnionFind`:
 
-{% highlight ruby %}
+{% highlight clojure %}
 {% raw %}
 (defrecord RankedUnionFind
   [;; parent-map holds a mapping of element => (parent element).
@@ -140,6 +142,7 @@ And now, without further delay, I give you the `RankedUnionFind`
 {% endhighlight %}
 
 Notice that this implementation holds 2 maps:
+
 1. The first one `parent-map` is a hashmap that maps elements to their parent.
    The astute reader will say: "Well, why not use a `Node` which holds a reference to their parent instead?"
    While this sounds very reasonable, you will get into problems when merging to trees
@@ -155,7 +158,7 @@ value, but then the data structure would not support `nil`s.
 
 Finally let's provide a way for users of the data structure to get a new instance
 
-{% highlight ruby %}
+{% highlight clojure %}
 {% raw %}
 (defn create-ranked-union-find
   "Take a collection of elements and initialize a RankedUnionFind with every
@@ -170,7 +173,7 @@ Finally let's provide a way for users of the data structure to get a new instanc
 
 # Conclusions
 
-So that's a functional immutable implementation of `UnionFind` in clojure. Notce that if
-you strip out comments there arae actually only 30 lines of code (or 40 if you count the protocol)
+So that's a functional immutable implementation of `UnionFind` in clojure. Notice that if
+you strip out comments there are actually only 30 lines of code (or 40 if you count the protocol)
 which just goes to show how concise clojure code can be. Out implementation, although not optimized,
 is still fairly efficient. It merges sets in `O(1)` and can `find` an element in a blazingly fast `O(log n)`.
